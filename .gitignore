@@ -20,6 +20,9 @@ pkg
 # for RubyMine
 .idea
 
+#Aptana project file
+.project
+
 # Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
 #
 # * Create a file at ~/.gitignore

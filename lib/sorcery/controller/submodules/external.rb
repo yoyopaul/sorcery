@@ -49,6 +49,18 @@ module Sorcery
               reset_session
               auto_login(user)
               user
+            elsif user = user_class.find_by_fbgraphid(@user_hash[:uid])
+              #this user has logged in at Facebook before, but we don't have their full details in our database
+              #update and save the user
+              user.username = @user_hash[:user_info]['name']
+              user.email = @user_hash[:user_info]['email']
+              user.save
+              #create the authentication object
+              config = user_class.sorcery_config
+              user_class.sorcery_config.authentications_class.create!({config.authentications_user_id_attribute_name => user.id, config.provider_attribute_name => provider, config.provider_uid_attribute_name => @user_hash[:uid]})
+              #log the user in
+              auto_login(user)
+              user
             end
           end
 
@@ -89,7 +101,13 @@ module Sorcery
               attrs.each do |k,v|
                 @user.send(:"#{k}=", v)
               end
-              @user.save(:validate => false)
+              
+              unless @user.save
+                @user = user_class.find_by_email(@user_hash[:user_info]['email'])
+                @user.fbgraphid = @user_hash[:uid]
+                @user.save
+              end
+              
               user_class.sorcery_config.authentications_class.create!({config.authentications_user_id_attribute_name => @user.id, config.provider_attribute_name => provider, config.provider_uid_attribute_name => @user_hash[:uid]})
             end
             @user
